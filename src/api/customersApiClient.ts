@@ -1,5 +1,7 @@
 import { AbstractApiClient } from './abstractApiClient.ts';
-import type { CustomerDto, CustomerListDto } from '../dto/customers.ts';
+import type { CustomerBalanceDto, CustomerDto, CustomerListDto } from '../dto/customers.ts';
+import type { CustomerAuditDetailsDto } from '../dto/audit.ts';
+import type { OrdersListDto } from '../dto/orders.ts';
 
 export class CustomersApiClient extends AbstractApiClient {
     public static async get(
@@ -25,5 +27,41 @@ export class CustomersApiClient extends AbstractApiClient {
         };
         // TODO: use me - const res = await this.apiRequest<{ pages: CustomerListDto[] }>({});
         // return res?.pages[page];
+    }
+
+    public static async getInfoById(id: number): Promise<CustomerDto | undefined> {
+        console.log(`CustomersApiClient.getInfoById: ${id}`);
+        const response = await fetch(`/customers.json`);
+        const json = (await response.json()) as unknown as { entries: CustomerDto[] };
+
+        return json.entries.find((e) => e.id === id);
+    }
+
+    public static async getCustomerBalanceById(
+        id: number,
+    ): Promise<CustomerBalanceDto | undefined> {
+        console.log(`CustomersApiClient.getCustomerBalanceById: ${id}`);
+        const response = await fetch(`/customer-balance.json`);
+        return (await response.json()) as unknown as CustomerBalanceDto;
+    }
+
+    public static async getCustomerAuditRecords(
+        id: number,
+    ): Promise<CustomerAuditDetailsDto | undefined> {
+        console.log(`CustomersApiClient.getCustomerAuditRecords: ${id}`);
+        const response = await fetch(`/audit-records.json`);
+        const parsed = (await response.json()) as unknown as CustomerAuditDetailsDto;
+        parsed.entries = parsed.entries.filter((e) => !!e.affectedCustomerId);
+        return parsed;
+    }
+
+    public static async getCustomerOrders(
+        customerId: number,
+        page: number,
+    ): Promise<OrdersListDto | undefined> {
+        console.log(`CustomersApiClient.getCustomerOrders: ${customerId}, page: ${page}`);
+        const response = await fetch(`/customer-brief-orders.json`);
+        const parsed = (await response.json()) as unknown as { pages: OrdersListDto[] };
+        return parsed.pages[page];
     }
 }
